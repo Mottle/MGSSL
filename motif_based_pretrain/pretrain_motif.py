@@ -1,23 +1,17 @@
 import argparse
-import torch
-import torch.nn as nn
-import torch.optim as optim
-import torch.optim.lr_scheduler as lr_scheduler
-from torch.utils.data import DataLoader
-from torch.autograd import Variable
+import sys
 
-import math, random, sys
+import torch.optim as optim
+from torch.utils.data import DataLoader
 from tqdm import tqdm
-import numpy as np
-from optparse import OptionParser
+
 from gnn_model import GNN
 
 sys.path.append('./util/')
 
-from mol_tree import *
-from nnutils import *
-from datautils import *
-from motif_generation import *
+from motif_based_pretrain.util.mol_tree import *
+from motif_based_pretrain.util.datautils import *
+from motif_based_pretrain.util.motif_generation import *
 
 import rdkit
 
@@ -47,7 +41,7 @@ def train(args, model_list, loader, optimizer_list, device):
         batch_size = len(batch)
 
         graph_batch = moltree_to_graph_data(batch)
-        #store graph object data in the process stage
+        # store graph object data in the process stage
         batch_index = graph_batch.batch.numpy()
         graph_batch = graph_batch.to(device)
         node_rep = model(graph_batch.x, graph_batch.edge_index, graph_batch.edge_attr)
@@ -65,11 +59,12 @@ def train(args, model_list, loader, optimizer_list, device):
         word_acc += wacc
         topo_acc += tacc
 
-        if (step+1) % 20 == 0:
+        if (step + 1) % 20 == 0:
             word_acc = word_acc / 20 * 100
             topo_acc = topo_acc / 20 * 100
             print("Loss: %.1f, Word: %.2f, Topo: %.2f" % (loss, word_acc, topo_acc))
             word_acc, topo_acc = 0, 0
+
 
 def main():
     # Training settings
@@ -97,7 +92,8 @@ def main():
     parser.add_argument('--dataset', type=str, default='./data/zinc/all.txt',
                         help='root directory of dataset. For now, only classification.')
     parser.add_argument('--gnn_type', type=str, default="gin")
-    parser.add_argument('--input_model_file', type=str, default='./saved_model/init', help='filename to read the model (if there is any)')
+    parser.add_argument('--input_model_file', type=str, default='./saved_model/init',
+                        help='filename to read the model (if there is any)')
     parser.add_argument('--output_model_file', type=str, default='./saved_model/motif_pretrain',
                         help='filename to output the pre-trained model')
     parser.add_argument('--num_workers', type=int, default=8, help='number of workers for dataset loading')
@@ -116,9 +112,11 @@ def main():
 
     dataset = MoleculeDataset(args.dataset)
 
-    loader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True, num_workers=args.num_workers, collate_fn=lambda x:x, drop_last=True)
+    loader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True, num_workers=args.num_workers,
+                        collate_fn=lambda x: x, drop_last=True)
 
-    model = GNN(args.num_layer, args.emb_dim, JK=args.JK, drop_ratio=args.dropout_ratio, gnn_type=args.gnn_type).to(device)
+    model = GNN(args.num_layer, args.emb_dim, JK=args.JK, drop_ratio=args.dropout_ratio, gnn_type=args.gnn_type).to(
+        device)
     if not args.input_model_file == "":
         model.load_state_dict(torch.load(args.input_model_file + ".pth"))
 

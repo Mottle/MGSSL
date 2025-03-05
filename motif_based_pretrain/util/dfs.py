@@ -1,9 +1,9 @@
 import torch
 import torch.nn as nn
-from mol_tree import Vocab, MolTree, MolTreeNode
-from nnutils import create_var, GRU
+
 from chemutils import enum_assemble
-import copy
+from mol_tree import MolTreeNode
+from nnutils import create_var, GRU
 
 MAX_NB = 8
 MAX_DECODE_LEN = 100
@@ -88,7 +88,7 @@ class Motif_Generation_dfs(nn.Module):
                 # Neighbors for message passing (target not included)
                 cur_nei = [h[(node_y.idx, node_x.idx)] for node_y in node_x.neighbors if node_y.idx != real_y.idx]
                 pad_len = MAX_NB - len(cur_nei)
-                if pad_len>= 0:
+                if pad_len >= 0:
                     cur_h_nei.extend(cur_nei)
                     cur_h_nei.extend([padding] * pad_len)
                 else:
@@ -103,9 +103,9 @@ class Motif_Generation_dfs(nn.Module):
                 else:
                     cur_o_nei.extend(cur_nei[:MAX_NB])
 
-
                 # Current clique embedding
-                em_list.append(torch.sum(node_rep[mol_index].index_select(0, torch.tensor(node_x.clique).to(self.device)), dim=0))
+                em_list.append(
+                    torch.sum(node_rep[mol_index].index_select(0, torch.tensor(node_x.clique).to(self.device)), dim=0))
 
             # Clique embedding
             cur_x = torch.stack(em_list, dim=0)
@@ -139,9 +139,9 @@ class Motif_Generation_dfs(nn.Module):
 
             # Hidden states for clique prediction
             if len(pred_list) > 0:
-                #batch_list = [batch_list[i] for i in pred_list]
-                #cur_batch = create_var(torch.LongTensor(batch_list))
-                #pred_mol_vecs.append(mol_vec.index_select(0, cur_batch))
+                # batch_list = [batch_list[i] for i in pred_list]
+                # cur_batch = create_var(torch.LongTensor(batch_list))
+                # pred_mol_vecs.append(mol_vec.index_select(0, cur_batch))
 
                 cur_pred = create_var(torch.LongTensor(pred_list))
                 pred_hiddens.append(new_h.index_select(0, cur_pred))
@@ -151,7 +151,8 @@ class Motif_Generation_dfs(nn.Module):
         em_list, cur_o_nei = [], []
         for mol_index, mol_tree in enumerate(mol_batch):
             node_x = mol_tree.nodes[0]
-            em_list.append(torch.sum(node_rep[mol_index].index_select(0, torch.tensor(node_x.clique).to(self.device)), dim=0))
+            em_list.append(
+                torch.sum(node_rep[mol_index].index_select(0, torch.tensor(node_x.clique).to(self.device)), dim=0))
             cur_nei = [h[(node_y.idx, node_x.idx)] for node_y in node_x.neighbors]
             pad_len = MAX_NB - len(cur_nei)
             cur_o_nei.extend(cur_nei)
@@ -167,8 +168,8 @@ class Motif_Generation_dfs(nn.Module):
 
         # Predict next clique
         pred_hiddens = torch.cat(pred_hiddens, dim=0)
-        #pred_mol_vecs = torch.cat(pred_mol_vecs, dim=0)
-        #pred_vecs = torch.cat([pred_hiddens, pred_mol_vecs], dim=1)
+        # pred_mol_vecs = torch.cat(pred_mol_vecs, dim=0)
+        # pred_vecs = torch.cat([pred_hiddens, pred_mol_vecs], dim=1)
         pred_vecs = pred_hiddens
         pred_vecs = nn.ReLU()(self.W(pred_vecs))
         pred_scores = self.W_o(pred_vecs)
@@ -191,7 +192,6 @@ class Motif_Generation_dfs(nn.Module):
         stop_acc = torch.sum(stop_acc) / stop_targets.nelement()
 
         return pred_loss, stop_loss, pred_acc.item(), stop_acc.item()
-
 
 
 """
@@ -241,4 +241,3 @@ def can_assemble(node_x, node_y):
     neighbors = singletons + neighbors
     cands = enum_assemble(node_x, neighbors)
     return len(cands) > 0
-

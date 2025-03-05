@@ -1,16 +1,11 @@
-import torch
-import copy
 import random
+
 import networkx as nx
-import numpy as np
-from torch_geometric.utils import convert
-from loader import graph_data_obj_to_nx_simple, nx_to_graph_data_obj_simple
-from rdkit import Chem
+import torch
 from rdkit.Chem import AllChem
-from loader import mol_to_graph_data_obj_simple, \
-    graph_data_obj_to_mol_simple
 
 from loader import MoleculeDataset
+from loader import graph_data_obj_to_nx_simple, nx_to_graph_data_obj_simple
 
 
 def check_same_molecules(s1, s2):
@@ -248,14 +243,14 @@ class MaskAtom:
             for bond_idx, (u, v) in enumerate(data.edge_index.cpu().numpy().T):
                 for atom_idx in masked_atom_indices:
                     if atom_idx in set((u, v)) and \
-                        bond_idx not in connected_edge_indices:
+                            bond_idx not in connected_edge_indices:
                         connected_edge_indices.append(bond_idx)
 
             if len(connected_edge_indices) > 0:
                 # create mask edge labels by copying bond features of the bonds connected to
                 # the mask atoms
                 mask_edge_labels_list = []
-                for bond_idx in connected_edge_indices[::2]: # because the
+                for bond_idx in connected_edge_indices[::2]:  # because the
                     # edge ordering is such that two directions of a single
                     # edge occur in pairs, so to get the unique undirected
                     # edge indices, we take every 2nd edge index from list
@@ -419,4 +414,3 @@ if __name__ == "__main__":
     # such that two directions of a single edge occur in pairs, so to get the
     # unique undirected edge indices, we take every 2nd edge index from list
     """
-

@@ -1,12 +1,11 @@
-import torch
-from torch.utils.data import Dataset
-from mol_tree import MolTree
 import numpy as np
+import torch
 from rdkit import Chem
-from rdkit.Chem import Descriptors
-from rdkit.Chem import AllChem
+from torch.utils.data import Dataset
 from torch_geometric.data import Batch
 from torch_geometric.data import Data
+
+from mol_tree import MolTree
 
 
 class MoleculeDataset(Dataset):
@@ -39,8 +38,8 @@ class PropDataset(Dataset):
     def __getitem__(self, idx):
         smiles = self.data[idx]
         mol_tree = MolTree(smiles)
-        #mol_tree.recover()
-        #mol_tree.assemble()
+        # mol_tree.recover()
+        # mol_tree.assemble()
         return mol_tree, self.prop_data[idx]
 
 

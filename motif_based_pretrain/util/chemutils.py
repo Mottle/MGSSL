@@ -1,10 +1,11 @@
+from collections import defaultdict
+
 import rdkit
 import rdkit.Chem as Chem
 from rdkit.Chem import BRICS
+from rdkit.Chem.EnumerateStereoisomers import EnumerateStereoisomers
 from scipy.sparse import csr_matrix
 from scipy.sparse.csgraph import minimum_spanning_tree
-from collections import defaultdict
-from rdkit.Chem.EnumerateStereoisomers import EnumerateStereoisomers, StereoEnumerationOptions
 
 MST_MAX_WEIGHT = 100
 MAX_NCAND = 2000
